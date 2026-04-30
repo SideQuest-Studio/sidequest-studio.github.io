@@ -1,4 +1,4 @@
-import { TiInfoLarge, TiContacts, TiUser } from "react-icons/ti"
+import { FaArrowRight } from "react-icons/fa"
 import Logo from "@/assets/logo.png"
 
 export default function Header() {
