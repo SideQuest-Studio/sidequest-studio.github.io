@@ -1,15 +1,13 @@
-/*
- * TODO: Use this index as the base template for web pages
- */
-
 import Header from "@/components/shared/header";
-import Hero from "./hero";
+import Hero from "@/pages/public/hero"
+import About from "@/pages/public/about";
 
-export default function Index() {
+export default function Public() {
 	return (
-		<div className="h-dvh w-dvw overflow-hidden overflow-y-auto">
+		<div className="w-dvw h-dvh overflow-hidden overflow-y-auto bg-neutral-950 text-white">
 			<Header />
 			<Hero />
+			<About />
 		</div>
 	)
 }
