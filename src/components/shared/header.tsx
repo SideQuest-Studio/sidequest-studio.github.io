@@ -1,7 +1,11 @@
-import { FaArrowRight } from "react-icons/fa"
 import Logo from "@/assets/logo.png"
+import { TiInfoLarge, TiUser } from "react-icons/ti"
 
-export default function Header() {
+interface headerProps {
+	position: number
+}
+
+export default function Header(props: headerProps) {
 	return (
 		<div className="flex justify-between items-center w-full h-[calc(5%+1rem)] sticky top-2 md:top-0 left-0 right-0 p-1 px-5 gap-2">
 			<div className="flex h-full gap-2 items-center md:w-[calc(20%-1rem)]">
