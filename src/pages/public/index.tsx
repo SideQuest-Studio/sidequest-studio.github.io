@@ -14,9 +14,7 @@ export default function Public() {
 			console.log("Root visible")
 			const height = root.scrollTop ?? 0
 			const offsetHeight = root.offsetHeight
-			setPosition(height / offsetHeight * 100)
-			console.log(height)
-			console.log(offsetHeight)
+			setPosition(height / offsetHeight)
 		}
 	}
 
