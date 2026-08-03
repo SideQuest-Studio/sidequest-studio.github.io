@@ -17,7 +17,7 @@ export async function GET() {
     // 1. Fetch organization members list
     const { data: orgMembers } = await axios.get("https://api.github.com/orgs/SideQuest-Studio/members", {
       headers,
-      timeout: 5000,
+      timeout: 10000,
     });
 
     if (!Array.isArray(orgMembers)) {
@@ -66,7 +66,7 @@ export async function GET() {
             questsCompleted: details.public_repos ? Math.min(50, Math.floor(details.public_repos / 4)) : 28,
             speciality: details.location ? `Open Source (${details.location})` : "Full-Stack Systems Architecture",
           },
-          isFoundingMember: idx === 0,
+          isFoundingMember: ["ryannkim327", "saucescode", "seiyanndev", "warebar"].includes(ghMember.login.toLowerCase()),
         };
       })
     );
