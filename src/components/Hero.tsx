@@ -26,7 +26,7 @@ export default function Hero({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center">
-          
+
           {/* Logo Badge Header */}
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/60 border border-slate-700/80 backdrop-blur-md mb-8 shadow-[0_0_20px_rgba(148,163,184,0.1)] group hover:border-slate-400 transition-all">
             <span className="relative flex h-2.5 w-2.5">
@@ -54,9 +54,9 @@ export default function Hero({
           </div>
 
           {/* Main Title (Black & White Primary with Slate Gradient) */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.1]">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-5xl leading-[1.1]">
             Where Passion{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 underline decoration-slate-500/40 underline-offset-8">
+            <span className="text-slate-200 underline decoration-slate-500/40 underline-offset-8">
               Side Quests
             </span>{" "}
             Become Main Quests
