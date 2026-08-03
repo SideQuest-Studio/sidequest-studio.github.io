@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Member } from "@/data/members";
-import { Project } from "@/data/projects";
-import { Milestone } from "@/data/milestones";
+import { Member } from "../../data/members";
+import { Project } from "../../data/projects";
+import { Milestone } from "../../data/milestones";
 import {
   getStoredMembers,
   saveMembers,
@@ -76,7 +76,28 @@ export default function AdminPage() {
     loadData();
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
+    try {
+      const res = await fetch("/api/members");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.members && Array.isArray(data.members) && data.members.length > 0) {
+          const stored = getStoredMembers();
+          const customLocalMembers = stored.filter((sm) => sm.id.startsWith("m_"));
+          const merged = [
+            ...customLocalMembers,
+            ...data.members.filter((dm: Member) => !customLocalMembers.some((clm) => clm.id === dm.id)),
+          ];
+          setMembers(merged);
+          setProjects(getStoredProjects());
+          setMilestones(getStoredMilestones());
+          setApplications(getStoredApplications());
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Admin error fetching /api/members:", e);
+    }
     setMembers(getStoredMembers());
     setProjects(getStoredProjects());
     setMilestones(getStoredMilestones());
@@ -258,7 +279,7 @@ export default function AdminPage() {
         {/* Background glow (monochrome white) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-md bg-zinc-950 border border-white/20 rounded-3xl p-8 shadow-2xl backdrop-blur-2xl text-center space-y-6">
+        <div className="relative z-10 w-full max-w-md bg-slate-950 border border-white/20 rounded-3xl p-8 shadow-2xl backdrop-blur-2xl text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-black border border-white/30 p-3 flex items-center justify-center shadow-lg">
             <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
           </div>
@@ -268,7 +289,7 @@ export default function AdminPage() {
               <Shield className="w-5 h-5 text-white" />
               <span>Studio Admin Portal</span>
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Authentication required to manage members, quests, and studio data.
             </p>
           </div>
@@ -281,11 +302,11 @@ export default function AdminPage() {
             )}
 
             <div>
-              <label className="block text-xs font-mono text-zinc-400 mb-1">
+              <label className="block text-xs font-mono text-slate-400 mb-1">
                 Admin Passcode
               </label>
               <div className="relative">
-                <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="password"
                   placeholder="Enter passcode..."
@@ -298,7 +319,7 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3 text-sm font-bold text-black bg-white hover:bg-zinc-200 rounded-xl transition-all shadow-lg"
+              className="w-full py-3 text-sm font-bold text-black bg-white hover:bg-slate-200 rounded-xl transition-all shadow-lg"
             >
               Authenticate Admin Session
             </button>
@@ -313,14 +334,14 @@ export default function AdminPage() {
                 sessionStorage.setItem("sidequest_admin_auth", "true");
                 showToast("Logged in as Studio Admin");
               }}
-              className="text-xs font-mono text-zinc-300 hover:text-white hover:underline flex items-center justify-center gap-1 mx-auto"
+              className="text-xs font-mono text-slate-300 hover:text-white hover:underline flex items-center justify-center gap-1 mx-auto"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Click for Quick Demo Access</span>
             </button>
           </div>
 
-          <Link href="/" className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white pt-2">
+          <Link href="/" className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white pt-2">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to Public Portfolio</span>
           </Link>
@@ -336,8 +357,8 @@ export default function AdminPage() {
         <div
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl border backdrop-blur-xl shadow-2xl text-xs font-mono flex items-center gap-2 ${
             toast.type === "success"
-              ? "bg-zinc-900 border-white text-white"
-              : "bg-zinc-900 border-zinc-500 text-zinc-300"
+              ? "bg-slate-900 border-white text-white"
+              : "bg-slate-900 border-slate-500 text-slate-300"
           }`}
         >
           <Sparkles className="w-4 h-4 text-white" />
@@ -346,7 +367,7 @@ export default function AdminPage() {
       )}
 
       {/* Admin Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/90 border-b border-white/10 backdrop-blur-xl py-4 px-6">
+      <header className="sticky top-0 z-40 bg-slate-950/90 border-b border-white/10 backdrop-blur-xl py-4 px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2.5 group">
@@ -354,10 +375,10 @@ export default function AdminPage() {
                 <Image src="/logo.png" alt="Logo" width={28} height={28} className="object-contain" />
               </div>
               <span className="font-bold text-sm text-white">
-                SIDEQUEST <span className="text-zinc-400 font-light">ADMIN</span>
+                SIDEQUEST <span className="text-slate-400 font-light">ADMIN</span>
               </span>
             </Link>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-[10px] font-mono text-zinc-300">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-[10px] font-mono text-slate-300">
               Session Active
             </span>
           </div>
@@ -365,7 +386,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="px-3.5 py-1.5 text-xs font-semibold text-zinc-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-white flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:text-white flex items-center gap-1.5"
             >
               <ExternalLink className="w-3.5 h-3.5 text-white" />
               <span>View Public Site</span>
@@ -373,7 +394,7 @@ export default function AdminPage() {
 
             <button
               onClick={handleLogout}
-              className="px-3.5 py-1.5 text-xs font-semibold text-zinc-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/15 flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-white/5 border border-white/10 rounded-xl hover:bg-white/15 flex items-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Log Out</span>
@@ -387,32 +408,32 @@ export default function AdminPage() {
         
         {/* Top Summary Stats Bar (Monochrome) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-zinc-950 border border-white/10 p-5 rounded-2xl">
-            <div className="flex items-center justify-between text-zinc-400 mb-1 text-xs font-mono">
+          <div className="bg-slate-950 border border-white/10 p-5 rounded-2xl">
+            <div className="flex items-center justify-between text-slate-400 mb-1 text-xs font-mono">
               <span>PARTY MEMBERS</span>
               <Users className="w-4 h-4 text-white" />
             </div>
             <div className="text-3xl font-extrabold text-white font-mono">{members.length}</div>
           </div>
 
-          <div className="bg-zinc-950 border border-white/10 p-5 rounded-2xl">
-            <div className="flex items-center justify-between text-zinc-400 mb-1 text-xs font-mono">
+          <div className="bg-slate-950 border border-white/10 p-5 rounded-2xl">
+            <div className="flex items-center justify-between text-slate-400 mb-1 text-xs font-mono">
               <span>ACTIVE QUESTS</span>
               <Layers className="w-4 h-4 text-white" />
             </div>
             <div className="text-3xl font-extrabold text-white font-mono">{projects.length}</div>
           </div>
 
-          <div className="bg-zinc-950 border border-white/10 p-5 rounded-2xl">
-            <div className="flex items-center justify-between text-zinc-400 mb-1 text-xs font-mono">
+          <div className="bg-slate-950 border border-white/10 p-5 rounded-2xl">
+            <div className="flex items-center justify-between text-slate-400 mb-1 text-xs font-mono">
               <span>MILESTONES</span>
               <Flag className="w-4 h-4 text-white" />
             </div>
             <div className="text-3xl font-extrabold text-white font-mono">{milestones.length}</div>
           </div>
 
-          <div className="bg-zinc-950 border border-white/10 p-5 rounded-2xl">
-            <div className="flex items-center justify-between text-zinc-400 mb-1 text-xs font-mono">
+          <div className="bg-slate-950 border border-white/10 p-5 rounded-2xl">
+            <div className="flex items-center justify-between text-slate-400 mb-1 text-xs font-mono">
               <span>APPLICATIONS</span>
               <Inbox className="w-4 h-4 text-white" />
             </div>
@@ -421,12 +442,12 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Selector & Controls (Monochrome) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-zinc-950 border border-white/10 p-3 rounded-2xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950 border border-white/10 p-3 rounded-2xl">
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
             <button
               onClick={() => setActiveTab("members")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === "members" ? "bg-white text-black font-bold shadow-md" : "text-zinc-400 hover:text-white"
+                activeTab === "members" ? "bg-white text-black font-bold shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
               <Users className="w-4 h-4" />
@@ -436,7 +457,7 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab("projects")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === "projects" ? "bg-white text-black font-bold shadow-md" : "text-zinc-400 hover:text-white"
+                activeTab === "projects" ? "bg-white text-black font-bold shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
               <Layers className="w-4 h-4" />
@@ -446,7 +467,7 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab("milestones")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === "milestones" ? "bg-white text-black font-bold shadow-md" : "text-zinc-400 hover:text-white"
+                activeTab === "milestones" ? "bg-white text-black font-bold shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
               <Flag className="w-4 h-4" />
@@ -456,7 +477,7 @@ export default function AdminPage() {
             <button
               onClick={() => setActiveTab("applications")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === "applications" ? "bg-white text-black font-bold shadow-md" : "text-zinc-400 hover:text-white"
+                activeTab === "applications" ? "bg-white text-black font-bold shadow-md" : "text-slate-400 hover:text-white"
               }`}
             >
               <Inbox className="w-4 h-4" />
@@ -472,7 +493,7 @@ export default function AdminPage() {
                   setEditingMember({} as Member);
                   setIsMemberModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-xl shadow-lg"
               >
                 <Plus className="w-4 h-4 text-black" />
                 <span>Recruit Member</span>
@@ -485,7 +506,7 @@ export default function AdminPage() {
                   setEditingProject({} as Project);
                   setIsProjectModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-xl shadow-lg"
               >
                 <Plus className="w-4 h-4 text-black" />
                 <span>New Quest</span>
@@ -498,7 +519,7 @@ export default function AdminPage() {
                   setEditingMilestone({} as Milestone);
                   setIsMilestoneModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-xl shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-xl shadow-lg"
               >
                 <Plus className="w-4 h-4 text-black" />
                 <span>New Milestone</span>
@@ -509,10 +530,10 @@ export default function AdminPage() {
 
         {/* TAB 1: MEMBERS MANAGEMENT TABLE */}
         {activeTab === "members" && (
-          <div className="bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-slate-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-white/[0.03] text-zinc-400 uppercase border-b border-white/10">
+                <thead className="bg-white/[0.03] text-slate-400 uppercase border-b border-white/10">
                   <tr>
                     <th className="py-3.5 px-4">Member</th>
                     <th className="py-3.5 px-4">RPG Class & Role</th>
@@ -522,7 +543,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-zinc-300">
+                <tbody className="divide-y divide-white/5 text-slate-300">
                   {members.map((m) => (
                     <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 px-4">
@@ -530,13 +551,13 @@ export default function AdminPage() {
                           <img src={m.avatar} alt={m.name} className="w-9 h-9 rounded-xl object-cover border border-white/10" />
                           <div>
                             <span className="font-bold text-white block text-sm">{m.name}</span>
-                            <span className="text-zinc-400 text-[11px]">{m.handle}</span>
+                            <span className="text-slate-400 text-[11px]">{m.handle}</span>
                           </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="text-white font-bold block">{m.classTitle}</span>
-                        <span className="text-zinc-400 text-[11px]">{m.role}</span>
+                        <span className="text-slate-400 text-[11px]">{m.role}</span>
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[11px]">
@@ -544,7 +565,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 font-bold text-white">LVL {m.level}</td>
-                      <td className="py-3.5 px-4 text-zinc-300">{m.stats?.commits || 0}</td>
+                      <td className="py-3.5 px-4 text-slate-300">{m.stats?.commits || 0}</td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -559,7 +580,7 @@ export default function AdminPage() {
                           </button>
                           <button
                             onClick={() => handleDeleteMember(m.id, m.name)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white"
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white"
                             title="Delete Member"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -576,10 +597,10 @@ export default function AdminPage() {
 
         {/* TAB 2: PROJECTS MANAGEMENT TABLE */}
         {activeTab === "projects" && (
-          <div className="bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-slate-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-white/[0.03] text-zinc-400 uppercase border-b border-white/10">
+                <thead className="bg-white/[0.03] text-slate-400 uppercase border-b border-white/10">
                   <tr>
                     <th className="py-3.5 px-4">Quest Title</th>
                     <th className="py-3.5 px-4">Category</th>
@@ -589,7 +610,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-zinc-300">
+                <tbody className="divide-y divide-white/5 text-slate-300">
                   {projects.map((p) => (
                     <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 px-4">
@@ -597,7 +618,7 @@ export default function AdminPage() {
                           <img src={p.bannerUrl} alt={p.title} className="w-12 h-8 rounded-lg object-cover border border-white/10 grayscale" />
                           <div>
                             <span className="font-bold text-white block text-sm">{p.title}</span>
-                            <span className="text-zinc-400 text-[11px] truncate max-w-xs block">{p.tagline}</span>
+                            <span className="text-slate-400 text-[11px] truncate max-w-xs block">{p.tagline}</span>
                           </div>
                         </div>
                       </td>
@@ -627,7 +648,7 @@ export default function AdminPage() {
                           </button>
                           <button
                             onClick={() => handleDeleteProject(p.id, p.title)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white"
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white"
                             title="Delete Quest"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -644,10 +665,10 @@ export default function AdminPage() {
 
         {/* TAB 3: MILESTONES MANAGEMENT TABLE */}
         {activeTab === "milestones" && (
-          <div className="bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-slate-950 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-white/[0.03] text-zinc-400 uppercase border-b border-white/10">
+                <thead className="bg-white/[0.03] text-slate-400 uppercase border-b border-white/10">
                   <tr>
                     <th className="py-3.5 px-4">Quarter / Year</th>
                     <th className="py-3.5 px-4">Milestone Title</th>
@@ -656,7 +677,7 @@ export default function AdminPage() {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-zinc-300">
+                <tbody className="divide-y divide-white/5 text-slate-300">
                   {milestones.map((ms) => (
                     <tr key={ms.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 px-4 font-bold text-white">
@@ -668,7 +689,7 @@ export default function AdminPage() {
                           {ms.badge}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-zinc-400 line-clamp-1 max-w-sm">{ms.description}</td>
+                      <td className="py-3.5 px-4 text-slate-400 line-clamp-1 max-w-sm">{ms.description}</td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -682,7 +703,7 @@ export default function AdminPage() {
                           </button>
                           <button
                             onClick={() => handleDeleteMilestone(ms.id, ms.title)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white"
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -700,18 +721,18 @@ export default function AdminPage() {
         {activeTab === "applications" && (
           <div className="space-y-4">
             {applications.length === 0 ? (
-              <div className="text-center py-12 bg-zinc-950 border border-white/10 rounded-2xl">
-                <Inbox className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm text-zinc-400">No applications received yet.</p>
+              <div className="text-center py-12 bg-slate-950 border border-white/10 rounded-2xl">
+                <Inbox className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">No applications received yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {applications.map((app) => (
-                  <div key={app.id} className="bg-zinc-950 border border-white/10 p-5 rounded-2xl space-y-3">
+                  <div key={app.id} className="bg-slate-950 border border-white/10 p-5 rounded-2xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-base font-bold text-white">{app.name}</h4>
-                        <span className="text-xs font-mono text-zinc-300">{app.email}</span>
+                        <span className="text-xs font-mono text-slate-300">{app.email}</span>
                       </div>
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
@@ -719,19 +740,19 @@ export default function AdminPage() {
                             ? "bg-white text-black font-bold border-white"
                             : app.status === "Pending"
                             ? "bg-white/10 text-white border-white/30"
-                            : "bg-zinc-900 text-zinc-400 border-zinc-800"
+                            : "bg-slate-900 text-slate-400 border-slate-800"
                         }`}
                       >
                         {app.status}
                       </span>
                     </div>
 
-                    <div className="text-xs text-zinc-300 font-light space-y-1">
-                      <p><strong className="font-mono text-zinc-400">Role Interest:</strong> {app.roleInterest}</p>
-                      <p><strong className="font-mono text-zinc-400">Quest Proposal:</strong> {app.questIdea}</p>
+                    <div className="text-xs text-slate-300 font-light space-y-1">
+                      <p><strong className="font-mono text-slate-400">Role Interest:</strong> {app.roleInterest}</p>
+                      <p><strong className="font-mono text-slate-400">Quest Proposal:</strong> {app.questIdea}</p>
                       {app.portfolioUrl && (
                         <p>
-                          <strong className="font-mono text-zinc-400">Portfolio:</strong>{" "}
+                          <strong className="font-mono text-slate-400">Portfolio:</strong>{" "}
                           <a href={app.portfolioUrl} target="_blank" rel="noreferrer" className="text-white underline">
                             {app.portfolioUrl}
                           </a>
@@ -740,12 +761,12 @@ export default function AdminPage() {
                     </div>
 
                     <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-zinc-500">{app.submittedAt}</span>
+                      <span className="text-[10px] font-mono text-slate-500">{app.submittedAt}</span>
                       <div className="flex items-center gap-2">
                         {app.status !== "Approved" && (
                           <button
                             onClick={() => handleApproveApplicationToMember(app)}
-                            className="px-3 py-1 text-xs font-bold text-black bg-white hover:bg-zinc-200 rounded-lg flex items-center gap-1"
+                            className="px-3 py-1 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-lg flex items-center gap-1"
                           >
                             <UserCheck className="w-3.5 h-3.5 text-black" />
                             <span>Approve & Recruit</span>
@@ -753,7 +774,7 @@ export default function AdminPage() {
                         )}
                         <button
                           onClick={() => handleApplicationStatus(app.id, "Archived")}
-                          className="px-2.5 py-1 text-xs font-semibold text-zinc-400 bg-white/5 hover:bg-white/10 hover:text-white rounded-lg"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white rounded-lg"
                         >
                           Archive
                         </button>
@@ -771,7 +792,7 @@ export default function AdminPage() {
       {/* EDIT / CREATE MEMBER MODAL */}
       {isMemberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="bg-zinc-950 border border-white/20 rounded-3xl p-6 w-full max-w-xl shadow-2xl my-8">
+          <div className="bg-slate-950 border border-white/20 rounded-3xl p-6 w-full max-w-xl shadow-2xl my-8">
             <h3 className="text-xl font-bold text-white mb-4">
               {editingMember?.id ? "Edit Guild Member" : "Recruit New Member"}
             </h3>
@@ -795,29 +816,29 @@ export default function AdminPage() {
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">Name</label>
+                  <label className="block text-slate-400 mb-1">Name</label>
                   <input name="name" defaultValue={editingMember?.name || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">Handle</label>
+                  <label className="block text-slate-400 mb-1">Handle</label>
                   <input name="handle" defaultValue={editingMember?.handle || "@"} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">RPG Class Title</label>
+                  <label className="block text-slate-400 mb-1">RPG Class Title</label>
                   <input name="classTitle" defaultValue={editingMember?.classTitle || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">Role</label>
+                  <label className="block text-slate-400 mb-1">Role</label>
                   <input name="role" defaultValue={editingMember?.role || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">Discipline</label>
+                  <label className="block text-slate-400 mb-1">Discipline</label>
                   <select name="category" defaultValue={editingMember?.category || "Engineering"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white">
                     <option value="Engineering">Engineering</option>
                     <option value="Design">Design</option>
@@ -827,28 +848,28 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">Level</label>
+                  <label className="block text-slate-400 mb-1">Level</label>
                   <input name="level" type="number" defaultValue={editingMember?.level || 80} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Avatar Image URL</label>
+                <label className="block text-slate-400 mb-1">Avatar Image URL</label>
                 <input name="avatar" defaultValue={editingMember?.avatar || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Bio</label>
+                <label className="block text-slate-400 mb-1">Bio</label>
                 <textarea name="bio" rows={2} defaultValue={editingMember?.bio || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Skills (comma separated)</label>
+                <label className="block text-slate-400 mb-1">Skills (comma separated)</label>
                 <input name="skills" defaultValue={editingMember?.skills?.join(", ") || "TypeScript, Next.js"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsMemberModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-zinc-400">Cancel</button>
+                <button type="button" onClick={() => setIsMemberModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-slate-400">Cancel</button>
                 <button type="submit" className="px-5 py-2 rounded-xl bg-white text-black font-bold">Save Member</button>
               </div>
             </form>
@@ -859,7 +880,7 @@ export default function AdminPage() {
       {/* EDIT / CREATE PROJECT MODAL */}
       {isProjectModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="bg-zinc-950 border border-white/20 rounded-3xl p-6 w-full max-w-xl shadow-2xl my-8">
+          <div className="bg-slate-950 border border-white/20 rounded-3xl p-6 w-full max-w-xl shadow-2xl my-8">
             <h3 className="text-xl font-bold text-white mb-4">
               {editingProject?.id ? "Edit Quest / Project" : "Create New Quest"}
             </h3>
@@ -883,18 +904,18 @@ export default function AdminPage() {
               className="space-y-3 text-xs"
             >
               <div>
-                <label className="block text-zinc-400 mb-1">Quest Title</label>
+                <label className="block text-slate-400 mb-1">Quest Title</label>
                 <input name="title" defaultValue={editingProject?.title || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Tagline</label>
+                <label className="block text-slate-400 mb-1">Tagline</label>
                 <input name="tagline" defaultValue={editingProject?.tagline || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">Category</label>
+                  <label className="block text-slate-400 mb-1">Category</label>
                   <select name="category" defaultValue={editingProject?.category || "Dev Tools"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white">
                     <option value="Dev Tools">Dev Tools</option>
                     <option value="Games & Interactive">Games & Interactive</option>
@@ -903,7 +924,7 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">Status</label>
+                  <label className="block text-slate-400 mb-1">Status</label>
                   <select name="status" defaultValue={editingProject?.status || "Live"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white">
                     <option value="Featured Main Quest">Featured Main Quest</option>
                     <option value="Live">Live</option>
@@ -915,37 +936,37 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">GitHub Stars</label>
+                  <label className="block text-slate-400 mb-1">GitHub Stars</label>
                   <input name="stars" type="number" defaultValue={editingProject?.stars || 100} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">GitHub Repo URL</label>
+                  <label className="block text-slate-400 mb-1">GitHub Repo URL</label>
                   <input name="githubUrl" defaultValue={editingProject?.githubUrl || "https://github.com"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Live Quest URL (Optional)</label>
+                <label className="block text-slate-400 mb-1">Live Quest URL (Optional)</label>
                 <input name="liveUrl" defaultValue={editingProject?.liveUrl || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Banner Image URL</label>
+                <label className="block text-slate-400 mb-1">Banner Image URL</label>
                 <input name="bannerUrl" defaultValue={editingProject?.bannerUrl || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Description</label>
+                <label className="block text-slate-400 mb-1">Description</label>
                 <textarea name="description" rows={2} defaultValue={editingProject?.description || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Tech Stack Tags (comma separated)</label>
+                <label className="block text-slate-400 mb-1">Tech Stack Tags (comma separated)</label>
                 <input name="tags" defaultValue={editingProject?.tags?.join(", ") || "Next.js, TypeScript"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsProjectModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-zinc-400">Cancel</button>
+                <button type="button" onClick={() => setIsProjectModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-slate-400">Cancel</button>
                 <button type="submit" className="px-5 py-2 rounded-xl bg-white text-black font-bold">Save Quest</button>
               </div>
             </form>
@@ -956,7 +977,7 @@ export default function AdminPage() {
       {/* EDIT / CREATE MILESTONE MODAL */}
       {isMilestoneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="bg-zinc-950 border border-white/20 rounded-3xl p-6 w-full max-w-lg shadow-2xl my-8">
+          <div className="bg-slate-950 border border-white/20 rounded-3xl p-6 w-full max-w-lg shadow-2xl my-8">
             <h3 className="text-xl font-bold text-white mb-4">
               {editingMilestone?.id ? "Edit Milestone" : "Add New Milestone"}
             </h3>
@@ -976,32 +997,32 @@ export default function AdminPage() {
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">Quarter (e.g. Q1)</label>
+                  <label className="block text-slate-400 mb-1">Quarter (e.g. Q1)</label>
                   <input name="quarter" defaultValue={editingMilestone?.quarter || "Q1"} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 mb-1">Year (e.g. 2026)</label>
+                  <label className="block text-slate-400 mb-1">Year (e.g. 2026)</label>
                   <input name="year" defaultValue={editingMilestone?.year || "2026"} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Title</label>
+                <label className="block text-slate-400 mb-1">Title</label>
                 <input name="title" defaultValue={editingMilestone?.title || ""} required className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Badge Label (e.g. Milestone, Award)</label>
+                <label className="block text-slate-400 mb-1">Badge Label (e.g. Milestone, Award)</label>
                 <input name="badge" defaultValue={editingMilestone?.badge || "Milestone"} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">Description</label>
+                <label className="block text-slate-400 mb-1">Description</label>
                 <textarea name="description" rows={3} defaultValue={editingMilestone?.description || ""} className="w-full px-3 py-2 bg-black border border-white/15 rounded-xl text-white" />
               </div>
 
               <div className="pt-3 flex justify-end gap-2">
-                <button type="button" onClick={() => setIsMilestoneModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-zinc-400">Cancel</button>
+                <button type="button" onClick={() => setIsMilestoneModalOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-slate-400">Cancel</button>
                 <button type="submit" className="px-5 py-2 rounded-xl bg-white text-black font-bold">Save Milestone</button>
               </div>
             </form>

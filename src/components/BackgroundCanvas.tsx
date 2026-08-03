@@ -48,8 +48,8 @@ export default function BackgroundCanvas() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Faint monochrome grid lines
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
+      // Faint slate grid lines
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.04)";
       ctx.lineWidth = 1;
       const gridSize = 60;
 
@@ -78,13 +78,13 @@ export default function BackgroundCanvas() {
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
-        // PURE WHITE PARTICLES ONLY
+        // PURE WHITE PARTICLES
         ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Connect close particles with faint white lines
+        // Connect close particles with faint slate lines
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x;
@@ -92,7 +92,7 @@ export default function BackgroundCanvas() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 130) {
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 * (1 - dist / 130)})`;
+            ctx.strokeStyle = `rgba(148, 163, 184, ${0.15 * (1 - dist / 130)})`;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);

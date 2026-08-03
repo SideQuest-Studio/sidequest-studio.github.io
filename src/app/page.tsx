@@ -15,7 +15,7 @@ import MemberDetailModal from "../components/MemberDetailModal";
 import ProjectDetailModal from "../components/ProjectDetailModal";
 import JoinModal from "../components/JoinModal";
 
-import { INITIAL_MEMBERS, Member } from "../data/members";
+import { Member, INITIAL_MEMBERS } from "../data/members";
 import { PROJECTS, Project } from "../data/projects";
 import { getStoredMembers, saveMembers, getStoredProjects } from "../utils/storage";
 
@@ -27,9 +27,32 @@ export default function Home() {
   const [isRecruitModalOpen, setIsRecruitModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  // Load persisted members & projects from storage
+  // Load members from /api/members API endpoint with localStorage fallback
   useEffect(() => {
-    setMembers(getStoredMembers());
+    async function fetchMembersList() {
+      try {
+        const res = await fetch("/api/members");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.members && Array.isArray(data.members) && data.members.length > 0) {
+            const stored = getStoredMembers();
+            const customLocalMembers = stored.filter((sm) => sm.id.startsWith("m_"));
+            const merged = [
+              ...customLocalMembers,
+              ...data.members.filter((dm: Member) => !customLocalMembers.some((clm) => clm.id === dm.id)),
+            ];
+            setMembers(merged);
+            saveMembers(merged);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch /api/members:", err);
+      }
+      setMembers(getStoredMembers());
+    }
+
+    fetchMembersList();
     setProjects(getStoredProjects());
   }, []);
 
@@ -43,7 +66,7 @@ export default function Home() {
   const totalStars = projects.reduce((acc, p) => acc + p.stars, 0);
 
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black font-sans antialiased overflow-x-hidden">
+    <div className="relative min-h-screen bg-black text-white selection:bg-slate-200 selection:text-slate-950 font-sans antialiased overflow-x-hidden">
       {/* Background Interactive Particle Canvas */}
       <BackgroundCanvas />
 

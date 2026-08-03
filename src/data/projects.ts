@@ -29,7 +29,7 @@ export const PROJECTS: Project[] = [
     forks: 185,
     githubUrl: "https://github.com/sidequest-studio/sidequest-engine",
     liveUrl: "https://sidequest-studio.github.io",
-    contributors: ["m1", "m2", "m5"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Customizable RPG member progression matrix",
       "Built-in dynamic member onboarding flow",
@@ -49,7 +49,7 @@ export const PROJECTS: Project[] = [
     forks: 92,
     githubUrl: "https://github.com/sidequest-studio/chromarealm-3d",
     liveUrl: "https://sidequest-studio.github.io/chromarealm",
-    contributors: ["m2", "m4"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Real-time Audio FFT Spectrum Analyzer",
       "Custom Post-Processing Bloom & Vignette pipeline",
@@ -69,7 +69,7 @@ export const PROJECTS: Project[] = [
     forks: 310,
     githubUrl: "https://github.com/sidequest-studio/nexus-cli",
     liveUrl: "https://crates.io",
-    contributors: ["m1", "m5", "m6"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Sub-millisecond startup times with zero dependencies",
       "Automated secret vault syncing across dev environments",
@@ -88,7 +88,7 @@ export const PROJECTS: Project[] = [
     stars: 960,
     forks: 140,
     githubUrl: "https://github.com/sidequest-studio/aegis-agent",
-    contributors: ["m3", "m5"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Zero-data leakage local LLM inference pipeline",
       "Automated pull request security patch generator",
@@ -108,7 +108,7 @@ export const PROJECTS: Project[] = [
     forks: 48,
     githubUrl: "https://github.com/sidequest-studio/vaporpulse",
     liveUrl: "https://sidequest-studio.github.io/vaporpulse",
-    contributors: ["m2", "m4"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Custom Wasm rhythm collision detector engine",
       "Global leaderboard powered by cryptographic hashes",
@@ -127,7 +127,7 @@ export const PROJECTS: Project[] = [
     stars: 680,
     forks: 75,
     githubUrl: "https://github.com/sidequest-studio/omniflow",
-    contributors: ["m3", "m6"],
+    contributors: ["gh_46703268"],
     highlights: [
       "Interactive node graph canvas with custom sub-flows",
       "Instant API endpoint generator for saved graphs",

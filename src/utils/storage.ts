@@ -45,7 +45,12 @@ export function getStoredMembers(): Member[] {
   if (typeof window === "undefined") return INITIAL_MEMBERS;
   try {
     const data = localStorage.getItem(MEMBERS_KEY);
-    return data ? JSON.parse(data) : INITIAL_MEMBERS;
+    if (!data) return INITIAL_MEMBERS;
+    const parsed: Member[] = JSON.parse(data);
+    // Exclude old mock members that are out of the GitHub organization
+    const legacyIds = new Set(["m1", "m2", "m3", "m4", "m5", "m6"]);
+    const cleaned = parsed.filter((m) => !legacyIds.has(m.id));
+    return cleaned.length > 0 ? cleaned : INITIAL_MEMBERS;
   } catch (e) {
     return INITIAL_MEMBERS;
   }
