@@ -94,8 +94,62 @@ async function fetchMemberDetails(ghMember: any, idx: number, headers: Record<st
   };
 }
 
+interface MembersCache {
+  data: Member[];
+  timestamp: number;
+}
+
+let membersCache: MembersCache | null = null;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes (600,000 ms)
+
 // GET /api/members - Supports chunk-by-chunk NDJSON streaming (?stream=true) and standard JSON response
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const isStream = url.searchParams.get("stream") === "true" || request.headers.get("accept")?.includes("application/x-ndjson");
+  const forceRefresh = url.searchParams.get("refresh") === "true";
+
+  const isCacheValid = membersCache && (Date.now() - membersCache.timestamp < CACHE_TTL_MS);
+
+  // If cache is valid and refresh is not requested, return cached response
+  if (isCacheValid && !forceRefresh && membersCache) {
+    if (isStream) {
+      const encoder = new TextEncoder();
+      const streamData = membersCache.data;
+      const stream = new ReadableStream({
+        start(controller) {
+          for (const member of streamData) {
+            controller.enqueue(encoder.encode(JSON.stringify(member) + "\n"));
+          }
+          controller.close();
+        },
+      });
+
+      return new NextResponse(stream, {
+        headers: {
+          'Content-Type': 'application/x-ndjson',
+          'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=60',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        count: membersCache.data.length,
+        members: membersCache.data,
+        cached: true,
+        cachedAt: new Date(membersCache.timestamp).toISOString(),
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=60',
+          'X-Cache': 'HIT',
+        },
+      }
+    );
+  }
+
   const headers: Record<string, string> = {
     'User-Agent': 'SideQuest-Studio-App',
     'Accept': 'application/vnd.github.v3+json',
@@ -105,12 +159,10 @@ export async function GET(request: NextRequest) {
     headers['Authorization'] = `Bearer ${process.env.NEXT_GITHUB_ORG_TOKEN}`;
   }
 
-  const url = new URL(request.url);
-  const isStream = url.searchParams.get("stream") === "true" || request.headers.get("accept")?.includes("application/x-ndjson");
-
   // STREAMING CHUNK-BY-CHUNK RESPONSE (NDJSON format)
   if (isStream) {
     const encoder = new TextEncoder();
+    const freshMembers: Member[] = [];
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -122,8 +174,15 @@ export async function GET(request: NextRequest) {
           if (Array.isArray(orgMembers)) {
             for (let i = 0; i < orgMembers.length; i++) {
               const member = await fetchMemberDetails(orgMembers[i], i, headers);
+              freshMembers.push(member);
               // Send member profile chunk-by-chunk as a single line NDJSON payload
               controller.enqueue(encoder.encode(JSON.stringify(member) + "\n"));
+            }
+            if (freshMembers.length > 0) {
+              membersCache = {
+                data: freshMembers,
+                timestamp: Date.now(),
+              };
             }
           }
         } catch (err) {
@@ -138,7 +197,8 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/x-ndjson',
         'Transfer-Encoding': 'chunked',
-        'Cache-Control': 'no-cache, no-transform',
+        'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=60',
+        'X-Cache': 'MISS',
       },
     });
   }
@@ -158,13 +218,38 @@ export async function GET(request: NextRequest) {
       orgMembers.map((ghMember: any, idx: number) => fetchMemberDetails(ghMember, idx, headers))
     );
 
-    return NextResponse.json({
-      success: true,
-      count: members.length,
-      members: members,
-    });
+    membersCache = {
+      data: members,
+      timestamp: Date.now(),
+    };
+
+    return NextResponse.json(
+      {
+        success: true,
+        count: members.length,
+        members: members,
+        cached: false,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=60',
+          'X-Cache': 'MISS',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Error in /api/members route:', error?.message || error);
+    // If GitHub API call fails but we have stale cache, serve stale cache as fallback
+    if (membersCache) {
+      return NextResponse.json({
+        success: true,
+        count: membersCache.data.length,
+        members: membersCache.data,
+        cached: true,
+        fallback: true,
+      });
+    }
+
     return NextResponse.json(
       {
         success: false,
@@ -175,3 +260,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

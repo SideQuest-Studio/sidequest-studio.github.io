@@ -105,3 +105,21 @@ export function saveApplications(apps: Application[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(apps));
 }
+
+const MEMBERS_FETCH_TIME_KEY = "sidequest_members_last_fetched";
+export const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export function isMembersCacheFresh(): boolean {
+  if (typeof window === "undefined") return false;
+  const lastFetchedStr = localStorage.getItem(MEMBERS_FETCH_TIME_KEY);
+  if (!lastFetchedStr) return false;
+  const lastFetched = parseInt(lastFetchedStr, 10);
+  if (isNaN(lastFetched)) return false;
+  return Date.now() - lastFetched < CACHE_TTL_MS;
+}
+
+export function updateMembersFetchTime() {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(MEMBERS_FETCH_TIME_KEY, Date.now().toString());
+}
+

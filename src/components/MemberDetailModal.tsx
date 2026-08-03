@@ -5,6 +5,8 @@ import { Project } from "../data/projects";
 import { X, Shield, Code2, Award, ExternalLink, Globe, Sparkles, Layers } from "lucide-react";
 import { GithubIcon, TwitterIcon, LinkedinIcon } from "./SocialIcons";
 
+import { getCommitRank } from "../utils/ranks";
+
 interface MemberDetailModalProps {
   member: Member | null;
   allProjects: Project[];
@@ -17,6 +19,8 @@ export default function MemberDetailModal({
   onClose,
 }: MemberDetailModalProps) {
   if (!member) return null;
+
+  const commitRank = getCommitRank(member.stats.commits);
 
   const memberProjects = allProjects.filter(
     (p) => p.contributors.includes(member.id) || member.projects.includes(p.id)
@@ -57,16 +61,28 @@ export default function MemberDetailModal({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold text-white">{member.name}</h2>
-              {member.isFoundingMember && (
-                <span className="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-600 text-white text-[10px] font-mono">
-                  FOUNDER
-                </span>
-              )}
             </div>
             <p className="text-sm font-mono text-slate-300 font-medium mt-0.5">
               {member.classTitle} • {member.handle}
             </p>
-            <p className="text-xs text-slate-400 mt-1">{member.role}</p>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span
+                className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-bold flex items-center gap-1 ${commitRank.bgClass} ${commitRank.borderClass} ${commitRank.colorClass}`}
+                title={commitRank.description}
+              >
+                <span>{commitRank.badge}</span>
+                <span>{commitRank.rank}</span>
+              </span>
+              {member.isFoundingMember && (
+                <>
+                  <span className="text-slate-600 text-xs">•</span>
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-600 text-white text-[10px] font-mono font-bold">
+                    <Sparkles className="w-3 h-3 text-white" />
+                    <span>FOUNDER</span>
+                  </span>
+                </>
+              )}
+            </div>
 
             {/* Social Icons */}
             <div className="flex items-center gap-2.5 mt-3">

@@ -17,7 +17,7 @@ import JoinModal from "../components/JoinModal";
 
 import { Member, INITIAL_MEMBERS } from "../data/members";
 import { PROJECTS, Project } from "../data/projects";
-import { getStoredMembers, saveMembers, getStoredProjects } from "../utils/storage";
+import { getStoredMembers, saveMembers, getStoredProjects, isMembersCacheFresh, updateMembersFetchTime } from "../utils/storage";
 
 export default function Home() {
   const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
@@ -27,9 +27,18 @@ export default function Home() {
   const [isRecruitModalOpen, setIsRecruitModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  // Stream members chunk-by-chunk from /api/members?stream=true
+  // Stream members chunk-by-chunk from /api/members?stream=true with 10-minute caching
   useEffect(() => {
     async function streamMembersList() {
+      const stored = getStoredMembers();
+      setMembers(stored);
+      setProjects(getStoredProjects());
+
+      // Skip background fetch if local cache is fresh (< 10 mins)
+      if (isMembersCacheFresh() && stored.length > 0) {
+        return;
+      }
+
       try {
         const res = await fetch("/api/members?stream=true");
         if (res.ok && res.body) {
@@ -76,16 +85,15 @@ export default function Home() {
               });
             } catch (e) {}
           }
+          updateMembersFetchTime();
           return;
         }
       } catch (err) {
         console.error("Failed to stream /api/members:", err);
       }
-      setMembers(getStoredMembers());
     }
 
     streamMembersList();
-    setProjects(getStoredProjects());
   }, []);
 
   // Save members to localStorage when modified via recruit modal

@@ -15,6 +15,8 @@ import {
   saveMilestones,
   getStoredApplications,
   saveApplications,
+  isMembersCacheFresh,
+  updateMembersFetchTime,
   Application,
 } from "@/utils/storage";
 import {
@@ -76,32 +78,39 @@ export default function AdminPage() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (forceRefresh = false) => {
+    const stored = getStoredMembers();
+    setProjects(getStoredProjects());
+    setMilestones(getStoredMilestones());
+    setApplications(getStoredApplications());
+
+    // Check if client cache is fresh (< 10 mins)
+    if (!forceRefresh && isMembersCacheFresh() && stored.length > 0) {
+      setMembers(stored);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/members");
+      const url = forceRefresh ? "/api/members?refresh=true" : "/api/members";
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data.members && Array.isArray(data.members) && data.members.length > 0) {
-          const stored = getStoredMembers();
           const customLocalMembers = stored.filter((sm) => sm.id.startsWith("m_"));
           const merged = [
             ...customLocalMembers,
             ...data.members.filter((dm: Member) => !customLocalMembers.some((clm) => clm.id === dm.id)),
           ];
           setMembers(merged);
-          setProjects(getStoredProjects());
-          setMilestones(getStoredMilestones());
-          setApplications(getStoredApplications());
+          saveMembers(merged);
+          updateMembersFetchTime();
           return;
         }
       }
     } catch (e) {
       console.error("Admin error fetching /api/members:", e);
     }
-    setMembers(getStoredMembers());
-    setProjects(getStoredProjects());
-    setMilestones(getStoredMilestones());
-    setApplications(getStoredApplications());
+    setMembers(stored);
   };
 
   const showToast = (message: string, type: "success" | "error" = "success") => {

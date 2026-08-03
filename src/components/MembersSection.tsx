@@ -6,6 +6,8 @@ import { Member } from "../data/members";
 import { Search, Shield, UserPlus, Globe, Sparkles, ExternalLink, Code2, Award } from "lucide-react";
 import { GithubIcon, TwitterIcon, LinkedinIcon } from "./SocialIcons";
 
+import { getCommitRank, getMemberCommitRank } from "../utils/ranks";
+
 interface MembersSectionProps {
   members: Member[];
   onSelectMember: (member: Member) => void;
@@ -29,6 +31,11 @@ export default function MembersSection({
     "Ops",
   ];
 
+  // Map member IDs to their commit leaderboard position (1st = Hackerman, 2nd = God, 3rd = Pro)
+  const sortedByCommits = [...members].sort((a, b) => b.stats.commits - a.stats.commits);
+  const guildRankMap = new Map<string, number>();
+  sortedByCommits.forEach((m, idx) => guildRankMap.set(m.id, idx + 1));
+
   const filteredMembers = members.filter((m) => {
     const matchesCategory =
       selectedCategory === "All" || m.category === selectedCategory;
@@ -46,7 +53,7 @@ export default function MembersSection({
   return (
     <section id="members" className="py-24 relative z-10 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
@@ -58,7 +65,7 @@ export default function MembersSection({
               Studio Members & Guild
             </h2>
             <p className="mt-3 text-slate-400 max-w-xl text-base font-light">
-              Meet the creators, engineers, and visionaries driving SideQuest projects. Filter by class specialization or recruit new members.
+              Meet the creators, engineers, and visionaries driving SideQuest projects. Ranked by commit contributions and mastery.
             </p>
           </div>
 
@@ -80,11 +87,10 @@ export default function MembersSection({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  selectedCategory === cat
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${selectedCategory === cat
                     ? "bg-white text-black font-bold shadow-md"
                     : "text-slate-400 hover:text-white hover:bg-slate-800/60"
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -121,121 +127,133 @@ export default function MembersSection({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMembers.map((member) => (
-              <div
-                key={member.id}
-                onClick={() => onSelectMember(member)}
-                className="group relative bg-slate-950/80 border border-slate-800 hover:border-slate-500 rounded-2xl p-6 transition-all duration-300 backdrop-blur-xl hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-900/50 cursor-pointer flex flex-col justify-between"
-              >
-                {/* Founder Badge */}
-                {member.isFoundingMember && (
-                  <div className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-600 text-white text-[10px] font-mono">
-                    <Sparkles className="w-3 h-3 text-white" />
-                    <span>FOUNDER</span>
-                  </div>
-                )}
+            {filteredMembers.map((member) => {
+              const guildRank = guildRankMap.get(member.id);
+              const commitRank = getMemberCommitRank(member.stats.commits);
 
-                <div>
-                  {/* Top Profile Header */}
-                  <div className="flex items-center gap-4 mb-5">
-                    {/* Avatar */}
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden border border-slate-700 group-hover:border-white transition-colors shadow-lg">
-                        <img
-                          src={member.avatar}
-                          alt={member.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+              return (
+                <div
+                  key={member.id}
+                  onClick={() => onSelectMember(member)}
+                  className="group relative bg-slate-950/80 border border-slate-800 hover:border-slate-500 rounded-2xl p-6 transition-all duration-300 backdrop-blur-xl hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-900/50 cursor-pointer flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Top Profile Header */}
+                    <div className="flex items-center gap-4 mb-5">
+                      {/* Avatar */}
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-slate-700 group-hover:border-white transition-colors shadow-lg">
+                          <img
+                            src={member.avatar}
+                            alt={member.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded-md bg-black border border-slate-600 text-[9px] font-mono font-bold text-white shadow">
+                          LVL {member.level}
+                        </div>
                       </div>
-                      <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded-md bg-black border border-slate-600 text-[9px] font-mono font-bold text-white shadow">
-                        LVL {member.level}
+
+                      <div>
+                        <h3 className="text-lg font-bold text-white group-hover:text-slate-200 transition-colors">
+                          {member.name}
+                        </h3>
+                        <p className="text-xs font-mono text-slate-400 font-medium">
+                          {member.classTitle}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span
+                            className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${commitRank.bgClass} ${commitRank.borderClass} ${commitRank.colorClass}`}
+                            title={commitRank.description}
+                          >
+                            <span>{commitRank.badge}</span>
+                            <span>{commitRank.rank}</span>
+                          </span>
+                          {member.isFoundingMember && (
+                            <>
+                              <span className="text-slate-600 text-[10px]">•</span>
+                              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-600 text-white text-[10px] font-mono font-bold">
+                                <Sparkles className="w-3 h-3 text-white" />
+                                <span>FOUNDER</span>
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-bold text-white group-hover:text-slate-200 transition-colors">
-                        {member.name}
-                      </h3>
-                      <p className="text-xs font-mono text-slate-400 font-medium">
-                        {member.classTitle}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {member.role}
-                      </p>
+                    {/* Bio */}
+                    <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-light mb-4">
+                      {member.bio}
+                    </p>
+
+                    {/* Skills Tags */}
+                    <div className="flex flex-wrap gap-1.5 mb-6">
+                      {member.skills.slice(0, 4).map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-slate-300"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {member.skills.length > 4 && (
+                        <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-slate-400">
+                          +{member.skills.length - 4}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Bio */}
-                  <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-light mb-4">
-                    {member.bio}
-                  </p>
+                  {/* Footer Stats & Social Links */}
+                  <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                      <span className="flex items-center gap-1 text-white">
+                        <Code2 className="w-3.5 h-3.5 text-slate-400" />
+                        {member.stats.commits} commits
+                      </span>
+                    </div>
 
-                  {/* Skills Tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-6">
-                    {member.skills.slice(0, 4).map((skill, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-slate-300"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {member.skills.length > 4 && (
-                      <span className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-[11px] font-mono text-slate-400">
-                        +{member.skills.length - 4}
-                      </span>
-                    )}
+                    {/* Social Icons */}
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      {member.socials.github && (
+                        <a
+                          href={member.socials.github}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
+                          title="GitHub Profile"
+                        >
+                          <GithubIcon className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {member.socials.twitter && (
+                        <a
+                          href={member.socials.twitter}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
+                          title="Twitter / X"
+                        >
+                          <TwitterIcon className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {member.socials.website && (
+                        <a
+                          href={member.socials.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
+                          title="Personal Portfolio"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                {/* Footer Stats & Social Links */}
-                <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-                    <span className="flex items-center gap-1 text-white">
-                      <Code2 className="w-3.5 h-3.5 text-slate-400" />
-                      {member.stats.commits} commits
-                    </span>
-                  </div>
-
-                  {/* Social Icons */}
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    {member.socials.github && (
-                      <a
-                        href={member.socials.github}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
-                        title="GitHub Profile"
-                      >
-                        <GithubIcon className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {member.socials.twitter && (
-                      <a
-                        href={member.socials.twitter}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
-                        title="Twitter / X"
-                      >
-                        <TwitterIcon className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {member.socials.website && (
-                      <a
-                        href={member.socials.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
-                        title="Personal Portfolio"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
