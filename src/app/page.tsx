@@ -27,32 +27,64 @@ export default function Home() {
   const [isRecruitModalOpen, setIsRecruitModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  // Load members from /api/members API endpoint with localStorage fallback
+  // Stream members chunk-by-chunk from /api/members?stream=true
   useEffect(() => {
-    async function fetchMembersList() {
+    async function streamMembersList() {
       try {
-        const res = await fetch("/api/members");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.members && Array.isArray(data.members) && data.members.length > 0) {
-            const stored = getStoredMembers();
-            const customLocalMembers = stored.filter((sm) => sm.id.startsWith("m_"));
-            const merged = [
-              ...customLocalMembers,
-              ...data.members.filter((dm: Member) => !customLocalMembers.some((clm) => clm.id === dm.id)),
-            ];
-            setMembers(merged);
-            saveMembers(merged);
-            return;
+        const res = await fetch("/api/members?stream=true");
+        if (res.ok && res.body) {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              try {
+                const chunk: Member = JSON.parse(line);
+                setMembers((prev) => {
+                  const exists = prev.some((m) => m.id === chunk.id);
+                  const updated = exists
+                    ? prev.map((m) => (m.id === chunk.id ? chunk : m))
+                    : [...prev, chunk];
+                  saveMembers(updated);
+                  return updated;
+                });
+              } catch (e) {
+                console.error("Error parsing member chunk:", e);
+              }
+            }
           }
+
+          if (buffer.trim()) {
+            try {
+              const chunk: Member = JSON.parse(buffer);
+              setMembers((prev) => {
+                const exists = prev.some((m) => m.id === chunk.id);
+                const updated = exists
+                  ? prev.map((m) => (m.id === chunk.id ? chunk : m))
+                  : [...prev, chunk];
+                saveMembers(updated);
+                return updated;
+              });
+            } catch (e) {}
+          }
+          return;
         }
       } catch (err) {
-        console.error("Failed to fetch /api/members:", err);
+        console.error("Failed to stream /api/members:", err);
       }
       setMembers(getStoredMembers());
     }
 
-    fetchMembersList();
+    streamMembersList();
     setProjects(getStoredProjects());
   }, []);
 
